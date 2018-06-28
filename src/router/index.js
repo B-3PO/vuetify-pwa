@@ -1,6 +1,10 @@
 import Vue from 'vue'
 import Router from 'vue-router'
+import orderBuilder from 'bypass-ordering-sdk/dist/browser'
 import HelloWorld from '@/components/HelloWorld'
+import Locations from '@/pages/Locations'
+import Menu from '@/pages/Menu'
+import Item from '@/pages/Item'
 
 Vue.use(Router)
 
@@ -10,6 +14,29 @@ export default new Router({
       path: '/',
       name: 'main',
       component: HelloWorld
+    },
+    {
+      path: '/locations',
+      name: 'locations',
+      component: Locations
+    },
+    {
+      path: '/menu',
+      name: 'menu',
+      component: Menu,
+      beforeEnter: (to, from, next) => {
+        if (!orderBuilder.location) return next(false)
+        next()
+      }
+    },
+    {
+      path: '/item/:id',
+      name: 'item',
+      component: Item,
+      beforeEnter: (to, from, next) => {
+        if (!orderBuilder.menu) return next(false)
+        next()
+      }
     }
   ]
 })

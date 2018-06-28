@@ -19,5 +19,8 @@
       "presets": ["env", "stage-2"],
       "plugins": [ "istanbul" ]
     }
-  }
+  },
+  "ignore": [
+    "node_modules/bypass-sdk/*"
+  ]
 }
