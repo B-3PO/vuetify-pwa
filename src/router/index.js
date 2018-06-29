@@ -1,7 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import orderBuilder from 'bypass-ordering-sdk/dist/browser'
-import HelloWorld from '@/components/HelloWorld'
+// import orderBuilder from 'bypass-ordering-sdk/dist/browser'
 import Locations from '@/pages/Locations'
 import Menu from '@/pages/Menu'
 import Item from '@/pages/Item'
@@ -12,11 +11,6 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'main',
-      component: HelloWorld
-    },
-    {
-      path: '/locations',
       name: 'locations',
       component: Locations
     },
@@ -25,7 +19,7 @@ export default new Router({
       name: 'menu',
       component: Menu,
       beforeEnter: (to, from, next) => {
-        if (!orderBuilder.location) return next(false)
+        // if (!orderBuilder.location) return next(false)
         next()
       }
     },
@@ -34,7 +28,7 @@ export default new Router({
       name: 'item',
       component: Item,
       beforeEnter: (to, from, next) => {
-        if (!orderBuilder.menu) return next(false)
+        // if (!orderBuilder.menu) return next(false)
         next()
       }
     }

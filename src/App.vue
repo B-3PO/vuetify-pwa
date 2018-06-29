@@ -2,6 +2,7 @@
   <v-app>
     <v-toolbar
       app
+      :extended="extendToolbar"
     >
       <v-toolbar-title v-text="title"></v-toolbar-title>
       <v-spacer></v-spacer>
@@ -13,35 +14,83 @@
             <v-list-tile-title>Sign-out</v-list-tile-title>
           </v-list-tile>
         </v-list>
-    </v-menu>
+      </v-menu>
+
+      <v-toolbar-title slot="extension">Categories</v-toolbar-title>
+
     </v-toolbar>
     <v-content>
       <router-view/>
     </v-content>
     <v-navigation-drawer
-      width="500"
+      width="400"
       persistent
       right
-      :mini-variant="miniVariant"
-      :clipped="false"
       v-model="rightDrawer"
-      fixed
       app
     >
-      <v-list>
-        <v-list-tile
-          value="true"
-          v-for="(item, i) in items"
-          :key="i"
-        >
+      <v-toolbar flat class="transparent">
+        <v-list class="pa-0">
+          <v-list-tile avatar>
+            <v-list-tile-avatar>
+              <v-icon>local_dining</v-icon>
+            </v-list-tile-avatar>
+            <v-list-tile-content>
+              <v-list-tile-title>Order</v-list-tile-title>
+            </v-list-tile-content>
+          </v-list-tile>
+        </v-list>
+      </v-toolbar>
+      <v-list class="pt-0" dense>
+        <v-divider></v-divider>
+        <v-list-tile v-for="item in lineItems" :key="item.id" @click="">
           <v-list-tile-action>
-            <v-icon v-html="item.icon"></v-icon>
+            <v-icon>fastfood</v-icon>
           </v-list-tile-action>
           <v-list-tile-content>
-            <v-list-tile-title v-text="item.title"></v-list-tile-title>
+            <v-list-tile-title>{{ item.name }}</v-list-tile-title>
+            <v-list-tile-sub-title v-for="selected in item.selectedOptions()" :key="selected.uuid">{{ selected.name }}  ${{ selected.price }}</v-list-tile-sub-title>
           </v-list-tile-content>
+          <v-list-tile-action>
+            <v-list-tile-action-text>${{ item.price }}</v-list-tile-action-text>
+          </v-list-tile-action>
         </v-list-tile>
       </v-list>
+
+      <v-toolbar flat class="transparent" style="position: absolute; bottom: 0; left: 0; right: 0;" height="240">
+        <v-list dense>
+          <v-divider></v-divider>
+          <v-list-tile>
+            <v-list-tile-content><v-list-tile-title>Subtotal</v-list-tile-title></v-list-tile-content>
+            <v-list-tile-action><v-list-tile-action-text>${{ calculations ? calculations.subtotal : 0 }}</v-list-tile-action-text></v-list-tile-action>
+          </v-list-tile>
+
+          <v-list-tile>
+            <v-list-tile-content><v-list-tile-title>Tax total</v-list-tile-title></v-list-tile-content>
+            <v-list-tile-action><v-list-tile-action-text>${{ calculations && calculations.combinedTaxes ? calculations.combinedTaxes.total : 0 }}</v-list-tile-action-text></v-list-tile-action>
+          </v-list-tile>
+
+          <v-list-tile>
+            <v-list-tile-content><v-list-tile-title>Surcharge total</v-list-tile-title></v-list-tile-content>
+            <v-list-tile-action><v-list-tile-action-text>${{ calculations && calculations.orderDiscount ? calculations.orderDiscount.amount : 0 }}</v-list-tile-action-text></v-list-tile-action>
+          </v-list-tile>
+
+          <v-list-tile>
+            <v-list-tile-content><v-list-tile-title>Order discount</v-list-tile-title></v-list-tile-content>
+            <v-list-tile-action><v-list-tile-action-text>${{ calculations && calculations.surcharges ? calculations.surcharges.total : 0 }}</v-list-tile-action-text></v-list-tile-action>
+          </v-list-tile>
+
+          <v-list-tile>
+            <v-list-tile-content><v-list-tile-title>Gratuity</v-list-tile-title></v-list-tile-content>
+            <v-list-tile-action><v-list-tile-action-text>${{ calculations && calculations.gratuity ? calculations.gratuity.total : 0 }}</v-list-tile-action-text></v-list-tile-action>
+          </v-list-tile>
+
+          <v-list-tile>
+            <v-list-tile-content><v-list-tile-title style="font-size: 18px;"><b>Total</b></v-list-tile-title></v-list-tile-content>
+            <v-list-tile-action><v-list-tile-action-text style="font-size: 20px;"><b>${{ calculations ? calculations.total : 0 }}</b></v-list-tile-action-text></v-list-tile-action>
+          </v-list-tile>
+        </v-list>
+      </v-toolbar>
     </v-navigation-drawer>
 
     <v-dialog v-model="loginDialog" fullscreen hide-overlay transition="dialog-bottom-transition">
@@ -94,6 +143,7 @@
 
 <script>
 import orderBuilder, { config } from 'bypass-ordering-sdk/dist/browser'
+import router from './router'
 
 export default {
   data () {
@@ -105,6 +155,9 @@ export default {
         icon: 'bubble_chart',
         title: 'Inspire'
       }],
+      lineItems: [],
+      total: 0,
+      calculations: undefined,
       miniVariant: false,
       rightDrawer: false,
       title: 'Order',
@@ -115,6 +168,7 @@ export default {
       password: null,
       email: null,
       loading: true,
+      extendToolbar: false,
       rules: {
         required: (value) => !!value || 'Required.',
         email: (value) => {
@@ -160,6 +214,17 @@ export default {
 
     this.onChangeDestroy = orderBuilder.onChange((message) => {
       this.rightDrawer = !!orderBuilder.order
+      if (orderBuilder.order) {
+        this.lineItems = orderBuilder.order.lineItems
+        this.calculations = orderBuilder.order.calculations
+      } else {
+        this.lineItems = []
+        this.calculations = undefined
+      }
+    })
+
+    router.afterEach(route => {
+      this.extendToolbar = route.name === 'menu'
     })
   },
 
