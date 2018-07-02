@@ -6,7 +6,7 @@
     >
       <v-toolbar-title v-text="title"></v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn depressed round small v-if="!loading && !signedIn" @click.native.stop="loginDialog = true">Sign-in</v-btn>
+      <v-btn depressed round small v-if="loaded && !signedIn" @click.native.stop="loginDialog = true">Sign-in</v-btn>
       <v-menu offset-y v-if="signedIn">
         <v-btn depressed round small slot="activator" color="primary" dark>{{ email }}</v-btn>
         <v-list>
@@ -16,7 +16,11 @@
         </v-list>
       </v-menu>
 
-      <v-toolbar-title slot="extension">Categories</v-toolbar-title>
+      <v-toolbar-title v-if="extendToolbar" slot="extension">
+        <v-layout row class="scroll-x" ref="category-scroll-container">
+          <v-btn dense flat v-for="category in categories" :key="category.id" :to="'/menu/'+category.name" @click="centerCategory($event)">{{category.name}}</v-btn>
+        </v-layout>
+      </v-toolbar-title>
 
     </v-toolbar>
     <v-content>
@@ -141,6 +145,12 @@
   </v-app>
 </template>
 
+<style>
+.scroll-x {
+  overflow-x: scroll;
+}
+</style>
+
 <script>
 import orderBuilder, { config } from 'bypass-ordering-sdk/dist/browser'
 import router from './router'
@@ -167,8 +177,9 @@ export default {
       signinValid: null,
       password: null,
       email: null,
-      loading: true,
+      loaded: false,
       extendToolbar: false,
+      categories: [],
       rules: {
         required: (value) => !!value || 'Required.',
         email: (value) => {
@@ -193,23 +204,36 @@ export default {
     },
 
     signout: function () {
-      return config.signout()
-        .then(() => {
-          this.signedIn = false
-          this.password = ''
-          this.email = ''
-        })
-        .catch(e => {
-          console.error(e)
-        })
+      config.signout()
+      this.signedIn = false
+      this.password = ''
+      this.email = ''
+    },
+
+    centerCategory ($event) {
+      let center = this.$refs['category-scroll-container'].getBoundingClientRect().width / 2
+      let buttonCenter = $event.target.parentNode.offsetLeft + ($event.target.parentNode.getBoundingClientRect().width / 2)
+      this.$refs['category-scroll-container'].scrollTo(buttonCenter - center, 0)
+    },
+
+    onScroll (e) {
+      console.log('opkokok')
+      // console.log(window.pageYOffset || document.documentElement.scrollTop)
+      // this.offsetTop = window.pageYOffset || document.documentElement.scrollTop
     }
   },
 
   created () {
-    config.onLoad(() => {
+    config.onConfigured(() => {
       this.signedIn = config.signedin
-      this.email = config.email
-      this.loading = false
+      this.email = config.user ? config.user.email : undefined
+      this.loaded = true
+    })
+
+    config.onChange(() => {
+      this.signedIn = config.signedin
+      this.email = config.user ? config.user.email : undefined
+      this.loaded = true
     })
 
     this.onChangeDestroy = orderBuilder.onChange((message) => {
@@ -217,12 +241,17 @@ export default {
       if (orderBuilder.order) {
         this.lineItems = orderBuilder.order.lineItems
         this.calculations = orderBuilder.order.calculations
+        this.categories = orderBuilder.menu.categories
       } else {
         this.lineItems = []
         this.calculations = undefined
+        this.categories = []
       }
     })
 
+    router.onReady(() => {
+      this.extendToolbar = router.history.current.name === 'menu'
+    })
     router.afterEach(route => {
       this.extendToolbar = route.name === 'menu'
     })

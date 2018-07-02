@@ -60,11 +60,13 @@
 </style>
 
 <script>
-import orderBuilder from 'bypass-ordering-sdk/dist/browser'
+import orderBuilder, { config } from 'bypass-ordering-sdk/dist/browser'
+import router from '../router'
 
 export default {
   data () {
     return {
+      loaded: false,
       lineItem: { },
       modifiers: []
     }
@@ -76,19 +78,22 @@ export default {
     }
   },
 
-  async created () {
-    if (!orderBuilder.location) {
-      let locations = await orderBuilder.getLocations()
-      await orderBuilder.setLocation(locations[0])
-      await orderBuilder.getMenu()
-    }
+  created () {
+    config.onConfigured(async () => {
+      if (!config.location) {
+        router.push('/')
+        return
+      }
 
-    this.lineItem = await orderBuilder.getLineItem(this.$route.params.id)
-    console.log(this.lineItem)
-    this.modifiers = this.lineItem.modifierGroups.reduce((a, b) => {
-      b.group = true
-      return a.concat(b).concat(b.modifierOptions)
-    }, [])
+      await orderBuilder.getMenu()
+      if (!orderBuilder.order) orderBuilder.createOrder()
+      this.lineItem = await orderBuilder.getLineItem(this.$route.params.id)
+      this.modifiers = this.lineItem.modifierGroups.reduce((a, b) => {
+        b.group = true
+        return a.concat(b).concat(b.modifierOptions)
+      }, [])
+      this.loaded = true
+    })
   }
 }
 </script>

@@ -26,12 +26,13 @@
 </template>
 
 <script>
-import orderBuilder from 'bypass-ordering-sdk/dist/browser'
+import orderBuilder, { config } from 'bypass-ordering-sdk/dist/browser'
 import router from '../router'
 
 export default {
   data () {
     return {
+      loaded: false,
       selected: null,
       items: null
     }
@@ -45,8 +46,15 @@ export default {
     }
   },
 
-  async created () {
-    this.items = await orderBuilder.getLocations()
+  created () {
+    config.onConfigured(async () => {
+      if (config.location) {
+        router.push('menu')
+        return
+      }
+      this.items = await orderBuilder.getLocations()
+      this.loaded = true
+    })
   }
 }
 </script>

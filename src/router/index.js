@@ -15,7 +15,7 @@ export default new Router({
       component: Locations
     },
     {
-      path: '/menu',
+      path: '/menu/:category?',
       name: 'menu',
       component: Menu,
       beforeEnter: (to, from, next) => {

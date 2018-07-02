@@ -4,7 +4,7 @@
       v-for="category in categories" :key="category.id"
     >
       <v-layout row style="padding: 40px 20px 20px 20px">
-        <span class="headline">{{category.name}}</span>
+        <span class="headline" :id="`category-${fixCateogryId(category.name)}`">{{category.name}}</span>
       </v-layout>
 
       <v-layout row wrap>
@@ -45,12 +45,13 @@
 </style>
 
 <script>
-import orderBuilder from 'bypass-ordering-sdk/dist/browser'
+import orderBuilder, { config } from 'bypass-ordering-sdk/dist/browser'
 import router from '../router'
 
 export default {
   data () {
     return {
+      loaded: false,
       selected: null,
       categories: null
     }
@@ -63,21 +64,42 @@ export default {
 
     addToOrder: (item) => {
       orderBuilder.order.createLineItem(item)
+      console.log(item.modifierGroups)
       if (item.modifierGroups.length) router.push({ name: 'item', params: { id: item.id } })
+    },
+
+    scrollToCateogry (category) {
+      if (!category) category = this.categories && this.categories.length ? this.categories[0].name : undefined
+      if (!category) return
+
+      this.$nextTick(() => {
+        let element = document.querySelector(`#category-${this.fixCateogryId(category)}`)
+        let pos = element ? element.offsetTop - 150 : 0
+        this.$vuetify.goTo(pos)
+      })
+    },
+
+    fixCateogryId (category) {
+      return category.replace(/\s/g, '_').replace(/&/g, '')
     }
   },
 
-  async created () {
-    if (!orderBuilder.location) {
-      let locations = await orderBuilder.getLocations()
-      await orderBuilder.setLocation(locations[0])
-    }
-    let menu = await orderBuilder.getMenu()
-    this.categories = menu.categories
-    // this.items = menu.categories.reduce((a, b) => {
-    //   b.category = true
-    //   return a.concat(b).concat(b.menuItems)
-    // }, [])
+  created () {
+    config.onConfigured(async () => {
+      if (!config.location) {
+        router.push('/')
+        return
+      }
+
+      let menu = await orderBuilder.getMenu()
+      if (!orderBuilder.order) orderBuilder.createOrder()
+      this.categories = menu.categories
+      this.scrollToCateogry(this.$router.history.current.params.category)
+      router.afterEach(route => {
+        this.scrollToCateogry(route.params.category)
+      })
+      this.loaded = true
+    })
   }
 }
 </script>

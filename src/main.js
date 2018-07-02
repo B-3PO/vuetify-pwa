@@ -25,6 +25,7 @@ import {
 } from 'vuetify'
 import '../node_modules/vuetify/src/stylus/app.styl'
 import { config } from 'bypass-ordering-sdk/dist/browser'
+import * as appConfigStorage from './services/appConfigStorage'
 Vue.use(Vuetify, {
   components: {
     VApp,
@@ -44,14 +45,22 @@ Vue.use(Vuetify, {
     VForm,
     VMenu,
     transitions
+  },
+  directives: {
+    scroll
   }
 })
 
 Vue.config.productionTip = false
 config.setEnvironment('integration')
-config.configure({
-  venueId: 86,
-  locationId: 21549
+config.setVenue(86)
+config.setLocation(21549)
+config.init(appConfigStorage.get())
+config.onConfigured(() => {
+  // config.setLocation(21549)
+})
+config.onChange(() => {
+  appConfigStorage.set(config.get())
 })
 
 /* eslint-disable no-new */
