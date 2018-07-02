@@ -8,7 +8,7 @@ export function get () {
   if (!hasLocalStorage) return {}
   let configData = {}
   try {
-    configData = JSON.parse(window.localStorage.getItem('config'))
+    configData = JSON.parse(window.localStorage.getItem('config') || '{}')
   } catch (e) {}
   return configData
 }

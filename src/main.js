@@ -54,7 +54,7 @@ Vue.use(Vuetify, {
 Vue.config.productionTip = false
 config.setEnvironment('integration')
 config.setVenue(86)
-config.setLocation(21549)
+// config.setLocation(21549)
 config.init(appConfigStorage.get())
 config.onConfigured(() => {
   // config.setLocation(21549)

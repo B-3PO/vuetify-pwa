@@ -16,11 +16,11 @@
         </v-list>
       </v-menu>
 
-      <v-toolbar-title v-if="extendToolbar" slot="extension">
+      <v-toolbar-items v-if="extendToolbar" slot="extension">
         <v-layout row class="scroll-x" ref="category-scroll-container">
-          <v-btn dense flat v-for="category in categories" :key="category.id" :to="'/menu/'+category.name" @click="centerCategory($event)">{{category.name}}</v-btn>
+          <v-btn small v-for="category in categories" :key="category.id" :to="'/menu/'+category.name" @click="centerCategory($event)" flat ripple>{{category.name}}</v-btn>
         </v-layout>
-      </v-toolbar-title>
+      </v-toolbar-items>
 
     </v-toolbar>
     <v-content>
